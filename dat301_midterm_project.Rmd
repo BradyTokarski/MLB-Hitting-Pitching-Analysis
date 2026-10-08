@@ -1,0 +1,224 @@
+---
+title: "DAT301 Midterm Project - Baseball Data"
+author: "Brady Tokarski"
+date: "2025-10-30"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+library(plotly)
+library(ggplot2)
+hitting_data = read.csv("baseball_hitting.csv", sep = ",", header = TRUE)
+pitching_data = read.csv("baseball_pitcher.csv", sep = ",", header = TRUE)
+
+hitting_data <- hitting_data %>%
+  rename('Name' = 'Player.name', 'Position' = 'position', 'Triples' = 'third.baseman','Doubles'  = 'Double..2B.', 'HR' = 'home.run',             'RBI' = 'run.batted.in', 'Walks' = 'a.walk', 'OBP' = 'On.base.Percentage', 'SLG' = 'Slugging.Percentage',                               'OPS' = 'On.base.Plus.Slugging', 'AB' = 'At.bat', 'SB' = 'stolen.base', 'CS' = 'Caught.stealing')
+
+pitching_data <- pitching_data %>%
+  rename('Name' = 'Player.name', 'ERA' = 'Earned.run.Average', 'IP' = 'Innings.pitched', 'Hits' = 'hit', 'Runs' = 'run', 
+         'ER' = 'earned.run', 'HBP' = 'Hit.Batsmen', 'BB' = 'base.on.balls', 'HR' = 'home.run', 'GP' = 'Games.played',
+         'GS' = 'Games.Started', 'CG' = 'Complete.Game')
+```
+
+## Data Sets
+
+I will be using two data sets during this project, which I got from Kaggle. One will be MLB hitting statistics for players (hitting_data) and the other will be MLB pitching statistics for players (pitching_data). I will be using these data sets to try and find trends based on certain statistics and players positions. 
+
+
+## Ggplot Boxplot code:
+<font size = "3">
+I wanted to see what the correlation was for batting average based on positions. A boxplot was used to compare each position. Here is the code I used to accomplish this: 
+```{r, eval = FALSE, echo = TRUE}
+hitting_data$Position <- factor(hitting_data$Position,
+                       levels = c("P", "C", "1B", "2B", "3B", "SS", 
+                                  "LF", "CF", "RF", "DH"))
+hitting_data <- hitting_data %>% 
+  filter(!is.na(Position))
+
+ggplot(data = hitting_data, aes(x = Position, y = AVG)) +
+  geom_boxplot(width = 0.25, outlier.alpha = 0.5) +
+  labs(title = "Batting Average Based On Position",
+       x = "Position", y = "AVG") + 
+  theme(text = element_text(size = 10),
+        plot.title = element_text(size = 12, face = "bold"))
+
+```
+</font>
+
+## Ggplot Boxplot
+
+```{r cars, echo = FALSE, fig.width = 6, fig.height = 4}
+hitting_data$Position <- factor(hitting_data$Position,
+                       levels = c("P", "C", "1B", "2B", "3B", "SS", "LF", "CF", "RF", "DH"))
+hitting_data <- hitting_data %>% 
+  filter(!is.na(Position))
+
+ggplot(data = hitting_data, aes(x = Position, y = AVG)) +
+  geom_boxplot(width = 0.25, outlier.alpha = 0.5) +
+  labs(title = "Batting Average Based On Position",
+       x = "Position", y = "AVG") + 
+  theme(text = element_text(size = 10),
+        plot.title = element_text(size = 12, face = "bold"))
+
+```
+<font size = "3">
+
+Besides pitchers, we can see that catchers tend to have to lowest batting averages. This might be the case because of the defensive and physical demands of their position. We see that Designated Hitters have higher averages because they don't have to play defense, all they have to do is worry about hitting. 
+</font>
+
+
+## Ggplot Scatter Plot
+
+```{r, warning=FALSE, message=FALSE, fig.width = 8}
+ggplot(pitching_data, aes(x = WHIP, y = ERA)) +
+  geom_point(alpha=.6) +
+  geom_smooth(se=FALSE, method="loess") +
+  labs(title="Pitcher ERA vs WHIP",
+       x="WHIP", y="ERA")
+
+```
+<font size = "4">
+This scatter plot shows us an obvious positive relationship between pitchers ERA and WHIP. This makes sense because WHIP shows how many base runners pitchers allow per inning pitched, so the more runners they allow, the more runs they give up. 
+</font>
+
+## 3D Scatter Plot
+<font size = "3">
+The following is a 3D scatter plot of pitchers strikouts, walks, and home runs allowed. 
+</font>
+```{r, warning=FALSE}
+plot_ly(pitching_data,
+        x=~BB, y=~Strikeouts, z=~HR,
+        text=~paste(`Name`),
+        color=~WHIP,
+        type='scatter3d', mode='markers') |>
+  layout(title="Pitcher Profile: BB vs SO vs HR (color = WHIP)",
+         scene=list(xaxis=list(title="BB"),
+                    yaxis=list(title="SO"),
+                    zaxis=list(title="HR allowed")))
+
+
+```
+
+## 3D Scatter Plot Analysis
+This 3D scatter plot visualizes the relationship between walks(BB), strikeouts(SO), and home runs allowed(HR) for pitchers, with color representing WHIP(walks + hits per inning pitched). A few trends I notice are: 
+
+-Pitchers with higher strikeout totals generally allow fewer walks and home runs, indicating stronger command and pitch effectiveness.
+
+-Higher WHIP values are clustered where pitchers allow more walks and home runs, reinforcing that higher WHIP usually correlates with poor run prevention. 
+
+-The majority of pitchers fall near the lower ends if HR and BB, suggesting that while strikeouts vary widely, extreme outliers in home runs or walks are rare.
+
+
+## Plotly Bar Plot
+
+```{r, warning=FALSE}
+HR_by_position <- hitting_data %>%
+  group_by(Position) %>%
+  summarise(Total_HR = sum(HR, na.rm = TRUE)) %>%
+  arrange(desc(Total_HR))
+
+plot_ly(data = HR_by_position,
+        x = ~Position,
+        y = ~Total_HR,
+        type = "bar",
+        color = ~Position,
+        text = ~paste("Total HR:", Total_HR)) %>%
+  layout(title = "Total Career Home Runs by Position",
+         xaxis = list(title = "Position"),
+         yaxis = list(title = "Total Home Runs"),
+         showlegend = FALSE)
+
+```
+
+
+## Plotly Pie Charts
+
+<font size = "3">
+I wanted to show the distribution of player positions within major home run clubs (specifically the 300+, 500+, and 600+ home run clubs). To do that I used pie charts that are divided into the different home run clubs I previously mentioned. 
+
+```{r, warning = FALSE}
+club_300 <- hitting_data %>% filter(HR >= 300)
+club_500 <- hitting_data %>% filter(HR >= 500)
+club_600 <- hitting_data %>% filter(HR >= 600)
+
+club_300_pos <- club_300 %>%
+  group_by(Position) %>%
+  summarise(Count = n())
+
+club_500_pos <- club_500 %>%
+  group_by(Position) %>%
+  summarise(Count = n())
+
+club_600_pos <- club_600 %>%
+  group_by(Position) %>%
+  summarise(Count = n())
+
+p1 <- plot_ly(club_300_pos,
+              labels = ~Position,
+              values = ~Count,
+              type = 'pie',
+              textinfo = 'label+percent',
+              hoverinfo = 'label+value+percent',
+              title = '300+ HR Club')
+
+p2 <- plot_ly(club_500_pos,
+              labels = ~Position,
+              values = ~Count,
+              type = 'pie',
+              textinfo = 'label+percent',
+              hoverinfo = 'label+value+percent',
+              title = '500+ HR Club')
+
+p3 <- plot_ly(club_600_pos,
+              labels = ~Position,
+              values = ~Count,
+              type = 'pie',
+              textinfo = 'label+percent',
+              hoverinfo = 'label+value+percent',
+              title = '600+ HR Club')
+
+
+plot_ly() %>%
+  add_pie(data = club_300_pos, labels = ~Position, values = ~Count, 
+          domain = list(x = c(0.00, 0.32), y = c(0, 1)),
+          name = "300+ HR", textinfo='label+percent', showlegend=TRUE) %>%
+  add_pie(data = club_500_pos, labels = ~Position, values = ~Count, 
+          domain = list(x = c(0.34, 0.66), y = c(0, 1)),
+          name = "500+ HR", textinfo='label+percent', showlegend=TRUE) %>%
+  add_pie(data = club_600_pos, labels = ~Position, values = ~Count, 
+          domain = list(x = c(0.68, 1.00), y = c(0, 1)),
+          name = "600+ HR", textinfo='label+percent', showlegend=TRUE) %>%
+  layout(title = "Distribution of Player Positions in Home Run Clubs")
+
+```
+</font>
+
+
+## Statistical Analysis
+
+```{r, fig.width = 4, fig.height = 4}
+corner <- hitting_data %>%
+  filter(Position %in% c("1B", "3B")) %>%
+  pull(AVG)
+
+middle <- hitting_data %>% 
+  filter(Position %in% c("2B", "SS")) %>% 
+  pull(AVG)
+
+t.test(corner, middle)
+
+```
+<font size = "2">
+This two sample t-test compared the average batting averages of corner infielders(1B and 3B) and middle infielders(2B and SS). The results show a statistically significant difference between the two groups(t = 3.10, p = 0.001973). 
+
+--The mean batting average for corner infielders was 0.265, while middle infielders averaged 0.261.
+
+--The 95% confidence interval for the difference in means (0.0015 to 0.0068) does not include zero, supporting that this difference is unlikely due to random chance. 
+</font>
+
+## Conclusion 
+<font size = "4">
+This analysis explored trends in Major League Baseball hitting and pitching performance using multiple visualizations and statistical methods. The batting average by position chart showed clear variation across defensive roles — with pitchers and catchers posting the lowest averages, and corner infielders and designated hitters demonstrating the strongest offensive output.For pitchers, the ERA vs. WHIP regression revealed a strong positive correlation, indicating that as pitchers allow more baserunners (higher WHIP), their earned run averages also rise — a logical connection between control and performance. The 3D plot of BB, SO, and HR further highlighted this relationship, showing that pitchers with high strikeout totals generally limit walks and home runs, aligning with lower WHIP values.Finally, the home run analyses — including total home runs by position and positional breakdowns of the 300+, 500+, and 600+ HR clubs — showed that power hitters are overwhelmingly concentrated in corner positions and the outfield. Defensive positions like shortstop and second base contribute minimally to these milestones, reflecting the specialization of offensive power in baseball. Overall, these results illustrate how player position strongly influences both offensive and pitching performance, underscoring the balance between defensive value and offensive production in constructing a successful baseball team.
+</font>
