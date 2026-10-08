@@ -1,5 +1,9 @@
 # MLB Hitting & Pitching Statistical Analysis
 
+## View the Full Presentation
+
+[Click here to view my interactive MLB analysis](https://bradytokarski.github.io/MLB-Hitting-Pitching-Analysis/dat301_midterm_project.html)
+
 ## Project Overview
 This project analyzes Major League Baseball hitting and pitching statistics using R. Completed as part of DAT 301 at Arizona State University, the analysis explores relationships between player positions, offensive performance, and pitching statistics.
 
